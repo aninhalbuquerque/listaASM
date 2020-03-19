@@ -26,14 +26,9 @@ looping:
     call printChar
     call lerChar ;ler numero
     mov ch, al
-    ;sub ch, '0'
     call printChar
     ;call lerChar ;ler \n
-    mov ah, 02h         ;colocando o cursor na próxima linha
-    mov bh, 0
-    add dh, 1
-    mov dl, 0
-    int 10h
+    call pularLinha
     sub ch, '0'
     cmp ch, 1
         je um
@@ -44,149 +39,144 @@ looping:
 um:
     mov si, primeiro
     lodsb
+    cmp al, cl          ;se o que eu botei agora já ta na posição 1
+        je printStates 
+    mov si, segundo     ;se o que eu botei agora ta no 2
+    lodsb
+    cmp al, cl
+        je .taNo2
+    mov si, terceiro     ;se o que eu botei agora ta no 2
+    lodsb
+    cmp al, cl
+        je .ajeita
+    mov si, primeiro
+    lodsb
     cmp al, '0'
         je .soBota
         jne .ajeita
-
+    .taNo2:
+        call mudar21
+        call escreve1
+        jmp printStates
     .soBota:
-        mov di, primeiro
-        mov al, cl
-        stosb
+        call escreve1
         jmp printStates
     .ajeita:
-        mov si, segundo
-        lodsb
-        mov di, terceiro
-        stosb
-        mov si, primeiro
-        lodsb
-        mov di, segundo
-        stosb
-        mov al, cl
-        mov di, primeiro
-        stosb
+        call mudar32
+        call mudar21
+        call escreve1
         jmp printStates
 dois:
     mov si, segundo
     lodsb
+    cmp al, cl
+        je printStates
+    mov si, primeiro 
+    lodsb
+    cmp al, cl
+        je .taNo1
+    mov si, terceiro
+        je .ajeita
+    mov si, segundo
+    lodsb
     cmp al, '0'
         je .soBota
         jne .ajeita
 
+    .taNo1:
+        call mudar12
+        call escreve2
+        jmp printStates
     .soBota:
-        mov di, segundo
-        mov al, cl
-        stosb
+        call escreve2
         jmp printStates
     .ajeita:
-        mov si, segundo
-        lodsb
-        mov di, terceiro
-        stosb
-        mov al, cl
-        mov di, segundo
-        stosb
+        call mudar32
+        call escreve2
         jmp printStates
 tres:
+    mov si, terceiro
+    lodsb
+    cmp al, cl
+        je printStates
+    mov si, segundo
+    lodsb
+    cmp al, cl
+        je .taNo2
+    mov si, primeiro
+    lodsb
+    cmp al, cl
+        je .taNo1
+    
+    call escreve3
+    jmp printStates
+
+    .taNo2:
+        call mudar23
+        call escreve3
+        jmp printStates
+    .taNo1:
+        call mudar12
+        call mudar23
+        call escreve3
+        jmp printStates
+
+mudar12:
+    mov si, segundo
+    lodsb
+    mov di, primeiro
+    stosb
+    ret
+mudar21:
+    mov si, primeiro
+    lodsb
+    mov di, segundo
+    stosb
+    ret
+mudar23:
+    mov si, terceiro
+    lodsb
+    mov di, segundo
+    stosb
+    ret
+mudar32:
+    mov si, segundo
+    lodsb
+    mov di, terceiro
+    stosb
+    ret
+escreve1:
+    mov di, primeiro
+    mov al, cl
+    stosb
+    ret
+escreve2:
+    mov di, segundo
+    mov al, cl
+    stosb
+    ret
+escreve3:
     mov di, terceiro
     mov al, cl
     stosb
-    jmp printStates
+    ret
 printStates:
     mov si, terceiro
     lodsb
-    call printState3
+    call printState
     mov si, espaco
     call printString
     mov si, primeiro
     lodsb
-    call printState1
+    call printState
     mov si, espaco
     call printString
     mov si, segundo
     lodsb
-    call printState2
-    mov ah, 02h         ;colocando o cursor na próxima linha
-    mov bh, 0
-    add dh, 1
-    mov dl, 0
-    int 10h
+    call printState
+    call pularLinha
     jmp looping
-printState3:
-    cmp al, '0'
-        je .n
-    cmp al, 'a'
-        je .a 
-    cmp al, 'b'
-        je .b 
-    cmp al, 'f' 
-        je .f
-    cmp al, 'v'
-        je .v 
-    cmp al, 'r'
-        je .r
-    .n:
-        mov si, nada
-        call printString
-        ret
-    .a:
-        mov si, a
-        call printString
-        ret
-    .b: 
-        mov si, b
-        call printString
-        ret
-    .f:
-        mov si, f
-        call printString
-        ret
-    .v:
-        mov si, v
-        call printString
-        ret
-    .r:
-        mov si, r 
-        call printString
-        ret
-printState1:
-    cmp al, '0'
-        je .n
-    cmp al, 'a'
-        je .a 
-    cmp al, 'b'
-        je .b 
-    cmp al, 'f' 
-        je .f
-    cmp al, 'v'
-        je .v 
-    cmp al, 'r'
-        je .r
-    .n:
-        mov si, nada
-        call printString
-        ret
-    .a:
-        mov si, a
-        call printString
-        ret
-    .b: 
-        mov si, b
-        call printString
-        ret
-    .f:
-        mov si, f
-        call printString
-        ret
-    .v:
-        mov si, v
-        call printString
-        ret
-    .r:
-        mov si, r 
-        call printString
-        ret
-printState2:
+printState:
     cmp al, '0'
         je .n
     cmp al, 'a'
@@ -238,6 +228,13 @@ printString:
 lerChar:
     mov ah, 0x00
     int 16h
+    ret
+pularLinha:
+    mov ah, 02h         ;colocando o cursor na próxima linha
+    mov bh, 0
+    add dh, 1
+    mov dl, 0
+    int 10h
     ret
 fim:    
     jmp $
