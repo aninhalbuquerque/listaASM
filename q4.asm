@@ -8,7 +8,7 @@ data:
     ctAltura db 0
     aux db 0
 start:
-	mov AX, 0011h           ;modo video
+	mov AX, 0012h           ;modo video
     mov bh, 0
 	mov bl, 5
 	int 10h
@@ -29,15 +29,28 @@ start:
 
     call leAltura
 
-    mov ah, 02h             ;passo pra proxima linha
+    mov ah, 0               ;limpo a tela
+    int 10h
+
+    mov AX, 0012h           ;coloco no modo video dnv
     mov bh, 0
-    mov dh, 2
+	mov bl, 5
+	int 10h
+
+    mov ah, 02h             ;posiciono o cursor no inicio
+    mov bh, 0
+    mov dh, 0
     mov dl, 0
     int 10h
 
     call printaBase         ;printo a parte de cima do retangulo
 
-    call printaParedes      ;printo as paredes
+    xor ah, ah
+    mov ah, 1
+    cmp [ctAltura], ah      ;vejo se a altura = 1
+    je fim                  ;se for, entao ja tenho a resposta (só o teto) e vou pro fim
+    
+    call printaParedes      ;senao, printo as paredes
 
     mov ah, 02h             ;passo pra proxima linha
     mov bh, 0
@@ -150,8 +163,8 @@ printaParedes:
     sub [ctAltura], ah      ;pq as linhas teto/base já sao parte da altura
 
     .loop:
-        xor ah, ah
-        cmp [ctAltura], ah  ;se ctAltura eh 0 ja printei tudo
+        xor bh, bh
+        cmp [ctAltura], bh  ;se ctAltura eh 0 ja printei tudo
         je .endloop
 
         mov ah, 02h         ;passo pra proxima linha
@@ -171,30 +184,21 @@ printaParedes:
         ret                 ;volto pra start
 
 printaParede:
-    xor bh, bh
-    add bh, 1
-
     mov al, 42              ;printo o *
     mov ah, 0xe
 	int 10h
 
-    add bh, 1
-    .loop:                  ;printo os espaços
-        cmp bh, [ctBase]
-        je .endloop
-
-        mov al, 32          ;cansei de comentar
-        mov ah, 0xe
-	    int 10h
-        
-        add bh, 1
-
-        jmp .loop
-    .endloop:
-        mov al, 42          ;printo o outro *
-        mov ah, 0xe
-        int 10h
-        ret                 ;e volto pro start
+    mov ah, 02h             ;movo o cursor pra posição do outro *
+    mov bh, 0
+    mov dh, dh
+    mov dl, [ctBase]
+    sub dl, 1
+    int 10h
+    
+    mov al, 42              ;printo o outro *
+    mov ah, 0xe
+    int 10h
+    ret                     ;e volto pro start
 fim:    
     jmp $
 times 510 - ($ - $$) db 0
